@@ -78,3 +78,15 @@ def freeze_arr():
     args = parser.parse_args()
     releasing.freeze_ansible_role_requirements_file(filename=args['file'])
 
+def unfreeze_arr():
+    """ Unfreeze all roles shas for milestone releases.
+    Also unfreezes roles from external sources.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--file",
+        help="path to ansible-role-requirements.yml file",
+        default="ansible-role-requirements.yml",
+    )
+    args = parser.parse_args()
+    releasing.unfreeze_ansible_role_requirements_file(filename=args['file'])
