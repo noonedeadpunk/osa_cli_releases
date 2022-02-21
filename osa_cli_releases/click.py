@@ -89,3 +89,15 @@ def freeze_arr(global_ctx, **kwargs):
     releasing.freeze_ansible_role_requirements_file(filename=kwargs["file"])
 
 
+@releases.command("unfreeze_roles_from_milestone")
+@click.pass_obj
+@click.option(
+    "--file",
+    type=click.Path(file_okay=True, dir_okay=False, writable=True),
+    help="path to ansible-role-requirements.yml",
+    default="ansible-role-requirements.yml",
+)
+def unfreeze_arr(global_ctx, **kwargs):
+    """ Sets OSA roles equals to trackbranch.
+    """
+    releasing.unfreeze_ansible_role_requirements_file(filename=kwargs["file"])

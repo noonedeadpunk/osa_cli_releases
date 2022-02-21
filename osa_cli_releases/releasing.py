@@ -214,8 +214,15 @@ def freeze_ansible_role_requirements_file(filename=""):
     )
 
 
+def unfreeze_ansible_role_requirements_file(filename=""):
+    """ Freezes a-r-r for master"""
+    update_ansible_role_requirements_file(
+        filename, milestone_unfreeze=True
+    )
+
+
 def update_ansible_role_requirements_file(
-    filename="", milestone_freeze=False
+    filename="", milestone_freeze=False, milestone_unfreeze=False
 ):
     """ Updates the SHA of each of the ansible roles based on branch given in argument
     Do not do anything on master except if milestone_freeze.
@@ -252,10 +259,13 @@ def update_ansible_role_requirements_file(
                 role_repo = clone_role(
                    role["src"], trackbranch, clone_root_path, depth="1"
                 )
-                # Unfreeze on master, not bump
-                if trackbranch == "master" and not milestone_freeze:
-                    print("Unfreeze master role")
+                if milestone_unfreeze:
+                    print(f"Unfreeze {trackbranch} role")
                     role["version"] = trackbranch
+                # Do nothing when trackbranch and version are same and not freezing
+                elif trackbranch == role.get("version") and not milestone_freeze:
+                    print("Version and trackbranch equal, skipping...")
+                    pass
                 # Freeze or Bump
                 else:
                     role_head = role_repo.head()
