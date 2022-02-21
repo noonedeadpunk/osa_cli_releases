@@ -64,7 +64,6 @@ def bump_upstream_repos_shas(global_ctx, **kwargs):
     help="path to ansible-role-requirements.yml",
     default="ansible-role-requirements.yml",
 )
-@click.argument("os_branch")
 def bump_arr(global_ctx, **kwargs):
     """ Bump roles SHA and copies their releases notes.
     Also bumps roles from external sources when the branch to bump is master.
