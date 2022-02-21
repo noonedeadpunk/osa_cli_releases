@@ -11,7 +11,17 @@ import yaml  # PyYAML
 from prettytable import PrettyTable  # prettytable
 from ruamel.yaml import YAML  # ruamel.yaml
 import re
-import fileinput
+
+
+def _update_head_date(data):
+    """Parse data and update date of last bump in it
+    :param data: String to parse for
+    :returns: string with current date instead of old one
+    """
+    return re.sub(
+        r'### HEAD as of [0-9.]{10} ###',
+        "### HEAD as of {:%d.%m.%Y} ###".format(datetime.now()),
+        data)
 
 
 def parse_requirements(requirements):
@@ -118,7 +128,8 @@ def find_yaml_files(path):
 def bump_upstream_repos_sha_file(filename):
     yaml = YAML()  # use ruamel.yaml to keep comments
     with open(filename, "r") as ossyml:
-        repofiledata = yaml.load(ossyml)
+        yml_data = ossyml.read()
+    repofiledata = yaml.load(_update_head_date(yml_data))
 
     repos = build_repos_dict(repofiledata)
     for project, projectdata in repos.items():
@@ -131,10 +142,6 @@ def bump_upstream_repos_sha_file(filename):
             )
             sha = get_sha_from_ref(projectdata["url"], projectdata["trackbranch"])
             repofiledata[project + "_git_install_branch"] = sha
-            repofiledata.yaml_add_eol_comment(
-                "HEAD as of {:%d.%m.%Y}".format(datetime.now()),
-                project + "_git_install_branch",
-            )
         else:
             print(
                 "Skipping project %s branch %s"
