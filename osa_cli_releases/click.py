@@ -56,6 +56,22 @@ def bump_upstream_repos_shas(global_ctx, **kwargs):
     releasing.bump_upstream_repos_shas(kwargs["path"])
 
 
+@releases.command("bump_collections")
+@click.pass_obj
+@click.option(
+    "--file",
+    type=click.Path(file_okay=True, dir_okay=False, writable=True),
+    help="path to ansible-collection-requirements.yml",
+    default="ansible-collection-requirements.yml",
+)
+def bump_acr(global_ctx, **kwargs):
+    """ Bump collection versions
+    """
+    releasing.update_ansible_collection_requirements(
+        filename=kwargs["file"]
+    )
+
+
 @releases.command("bump_roles")
 @click.pass_obj
 @click.option(

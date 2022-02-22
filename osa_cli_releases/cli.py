@@ -50,6 +50,19 @@ def bump_upstream_repos_shas():
     releasing.bump_upstream_repos_shas(args.path)
 
 
+def bump_acr():
+    """ Bump collection versions.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--file",
+        help="path to ansible-collection-requirements.yml file",
+        default="ansible-collection-requirements.yml",
+    )
+    args = parser.parse_args()
+    releasing.update_ansible_collection_requirements(filename=args['file'])
+
+
 def bump_arr():
     """ Bump roles SHA and copies releases notes from the openstack roles.
     Also bumps roles from external sources when the branch to bump is master.
