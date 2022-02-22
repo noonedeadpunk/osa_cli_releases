@@ -7,7 +7,6 @@ import tempfile
 from dulwich.repo import Repo  # dulwich
 import requests  # requests
 import requirements as pyrequirements  # requirements-parser
-import yaml  # PyYAML
 from prettytable import PrettyTable  # prettytable
 from ruamel.yaml import YAML  # ruamel.yaml
 import re
@@ -79,8 +78,9 @@ def discover_requirements_sha(
     :param path: Location of the YAML file containing requirements_git_install_branch
     :returns: String containing the SHA of the requirements repo.
     """
+    yaml = YAML()  # use ruamel.yaml to keep comments
     with open(path, "r") as os_repos_yaml:
-        repos = yaml.safe_load(os_repos_yaml)
+        repos = yaml.load(os_repos_yaml)
     return repos["requirements_git_install_branch"]
 
 
@@ -296,7 +296,9 @@ def update_ansible_role_requirements_file(
     print("Overwriting ansible-role-requirements")
     with open(filename, "w") as arryml:
         yaml = YAML()  # use ruamel.yaml to keep comments that could appear
+        yaml.explicit_start = True
         yaml.dump(all_roles, arryml)
+        yaml.explicit_start = False
 
 
 def sort_roles(ansible_role_requirements_file):
@@ -304,8 +306,10 @@ def sort_roles(ansible_role_requirements_file):
     :param ansible_role_requirements_file: Path to the a-r-r file
     :returns: 3-tuple: (list of openstack roles, list of external roles, list of all roles)
     """
+    yaml = YAML()  # use ruamel.yaml to keep comments
     with open(ansible_role_requirements_file, "r") as arryml:
-        all_roles = yaml.safe_load(arryml)
+        yaml_data = arryml.read()
+    all_roles = yaml.load(_update_head_date(yaml_data))
     external_roles = []
     openstack_roles = []
     for role in all_roles:
@@ -360,6 +364,7 @@ def find_release_number():
     """ Find a release version amongst usual OSA files
     :returns: version (str),  filename containing version (string)
     """
+    yaml = YAML()  # use ruamel.yaml to keep comments
     oa_version_files = [
         "inventory/group_vars/all/all.yml",
         "group_vars/all/all.yml",
@@ -368,7 +373,7 @@ def find_release_number():
     for filename in oa_version_files:
         try:
             with open(filename, "r") as vf:
-                version = yaml.safe_load(vf)["openstack_release"]
+                version = yaml.load(vf)["openstack_release"]
                 found_file = filename
                 break
         except FileNotFoundError:
