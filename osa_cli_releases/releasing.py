@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from packaging import version
 from dulwich.repo import Repo  # dulwich
 import requests  # requests
 import requirements as pyrequirements  # requirements-parser
@@ -264,7 +265,7 @@ def update_ansible_role_requirements_file(
         if trackbranch:
             try:
                 role_repo = clone_role(
-                   role["src"], trackbranch, clone_root_path, depth="1"
+                   role["src"], clone_root_path, branch=trackbranch, depth="1"
                 )
                 if milestone_unfreeze:
                     print(f"Unfreeze {trackbranch} role")
@@ -301,6 +302,35 @@ def update_ansible_role_requirements_file(
         yaml.explicit_start = False
 
 
+def update_ansible_collection_requirements(filename=''):
+    clone_root_path = tempfile.mkdtemp()
+    yaml = YAML()  # use ruamel.yaml to keep comments
+    with open(filename, "r") as arryml:
+        yaml_data = arryml.read()
+    tag_refs = 'refs/tags'.encode()
+    all_requirements = yaml.load(_update_head_date(yaml_data))
+    all_collections = all_requirements.get('collections')
+
+    for collection in all_collections:
+        collection_type = collection.get('type')
+        if collection_type == 'git' and collection["version"] != 'master':
+            colection_repo = clone_role(
+                collection["name"], clone_root_path
+            )
+            collection_tags = colection_repo.refs.as_dict(tag_refs)
+            collection_tags_list = [key.decode() for key in collection_tags.keys()]
+            collection_versions = list(map(version.parse, collection_tags_list))
+            collection['version'] = str(max(collection_versions))
+
+    all_requirements['collections'] = all_collections
+    print("Overwriting ansible-collection-requirements")
+    with open(filename, "w") as arryml:
+        yaml = YAML()  # use ruamel.yaml to keep comments that could appear
+        yaml.explicit_start = True
+        yaml.dump(all_requirements, arryml)
+        yaml.explicit_start = False
+
+
 def sort_roles(ansible_role_requirements_file):
     """ Separate the openstack roles from the external roles
     :param ansible_role_requirements_file: Path to the a-r-r file
@@ -322,7 +352,7 @@ def sort_roles(ansible_role_requirements_file):
     return openstack_roles, external_roles, all_roles
 
 
-def clone_role(url, branch, clone_root_path, clone_folder=None, depth=None):
+def clone_role(url, clone_root_path, branch=None, clone_folder=None, depth=None):
     """ Git clone
     :param url: Source of the git repo
     :param branch: Branch of the git repo
@@ -338,7 +368,8 @@ def clone_role(url, branch, clone_root_path, clone_folder=None, depth=None):
 
     gitcall.append(url)
 
-    gitcall.extend(["-b", branch])
+    if branch:
+        gitcall.extend(["-b", branch])
 
     if not clone_folder:
         clone_folder = url.split("/")[-1]
