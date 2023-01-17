@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import glob
+from jinja2 import Template as j2_template
 import os
 import shutil
 import subprocess
@@ -12,6 +13,10 @@ from prettytable import PrettyTable  # prettytable
 from ruamel.yaml import YAML  # ruamel.yaml
 import re
 
+BASE_URI_MAPPING = {
+        'openstack_opendev_base_url': 'https://opendev.org',
+        'openstack_github_base_url': 'https://github.com',
+    }
 
 def _update_head_date(data):
     """Parse data and update date of last bump in it
@@ -128,6 +133,7 @@ def find_yaml_files(path):
 
 def bump_upstream_repos_sha_file(filename):
     yaml = YAML()  # use ruamel.yaml to keep comments
+    yaml.preserve_quotes = True
     with open(filename, "r") as ossyml:
         yml_data = ossyml.read()
     repofiledata = yaml.load(_update_head_date(yml_data))
@@ -136,17 +142,18 @@ def bump_upstream_repos_sha_file(filename):
     for project, projectdata in repos.items():
         # a _git_track_branch string of "None" means no tracking, which means
         # do not update (as there is no branch to track)
+        project_url = j2_template(projectdata["url"]).render(BASE_URI_MAPPING)
         if projectdata["trackbranch"] != "None":
             print(
                 "Bumping project %s on its %s branch"
-                % (projectdata["url"], projectdata["trackbranch"])
+                % (project_url, projectdata["trackbranch"])
             )
-            sha = get_sha_from_ref(projectdata["url"], projectdata["trackbranch"])
+            sha = get_sha_from_ref(project_url, projectdata["trackbranch"])
             repofiledata[project + "_git_install_branch"] = sha
         else:
             print(
                 "Skipping project %s branch %s"
-                % (projectdata["url"], projectdata["trackbranch"])
+                % (project_url, projectdata["trackbranch"])
             )
 
     with open(filename, "w") as fw:
