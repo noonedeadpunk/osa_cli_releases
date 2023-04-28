@@ -144,6 +144,7 @@ def bump_upstream_repos_sha_file(filename):
     repofiledata = yaml.load(_update_head_date(yml_data))
 
     repos = build_repos_dict(repofiledata)
+    changed = False
     for project, projectdata in repos.items():
         # a _git_track_branch string of "None" means no tracking, which means
         # do not update (as there is no branch to track)
@@ -154,18 +155,21 @@ def bump_upstream_repos_sha_file(filename):
                 % (project_url, projectdata["trackbranch"])
             )
             sha = get_sha_from_ref(project_url, projectdata["trackbranch"])
-            repofiledata[project + "_git_install_branch"] = sha
+            if repofiledata[project + "_git_install_branch"] != sha:
+                repofiledata[project + "_git_install_branch"] = sha
+                changed = True
         else:
             print(
                 "Skipping project %s branch %s"
                 % (project_url, projectdata["trackbranch"])
             )
 
-    with open(filename, "w") as fw:
-        # Temporarily revert the explicit start to add --- into first line
-        yaml.explicit_start = True
-        yaml.dump(repofiledata, fw)
-        yaml.explicit_start = False
+    if changed:
+        with open(filename, "w") as fw:
+            # Temporarily revert the explicit start to add --- into first line
+            yaml.explicit_start = True
+            yaml.dump(repofiledata, fw)
+            yaml.explicit_start = False
 
 
 # def parse_repos_info(filename):
