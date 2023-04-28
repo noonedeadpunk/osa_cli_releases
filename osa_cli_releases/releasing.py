@@ -123,12 +123,17 @@ def bump_upstream_repos_shas(path):
         bump_upstream_repos_sha_file(filename)
 
 
-def find_yaml_files(path):
-    """ Lists all the yml files in a specific path
-    :param path: Folder location
+def find_yaml_files(paths):
+    """ Lists all the files in a provided paths
+    :param paths: Folder location
     :returns: List of files matching the glob
     """
-    return glob.glob(path + "/*.yml")
+    found_files = [
+        file
+        for path in paths
+        for file in glob.glob(path)
+    ]
+    return found_files
 
 
 def bump_upstream_repos_sha_file(filename):

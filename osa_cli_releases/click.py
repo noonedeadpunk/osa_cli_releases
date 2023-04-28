@@ -46,8 +46,10 @@ def analyse_global_requirement_pins(global_ctx, **kwargs):
 @click.option(
     "--path",
     type=click.Path(file_okay=False, dir_okay=True, writable=True, resolve_path=True),
-    help="path to the folder containing YAML files to update with new SHAs",
-    default="playbooks/defaults/repo_packages/",
+    multiple=True,
+    help="glob expressions for finding files that contain SHAs",
+    default=["playbooks/defaults/repo_packages/*.yml",
+             "inventory/group_vars/*all/*_git.yml"],
 )
 def bump_upstream_repos_shas(global_ctx, **kwargs):
     """ Bump upstream projects SHAs.

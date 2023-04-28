@@ -42,8 +42,10 @@ def bump_upstream_repos_shas():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--path",
-        help="path to the folder containing YAML files to update with new SHAs",
-        default="playbooks/defaults/repo_packages/",
+        action='append'
+        help="glob expressions for finding files that contain SHAs",
+        default=["playbooks/defaults/repo_packages/*.yml",
+                 "inventory/group_vars/*all/*_git.yml"],
     )
     args = parser.parse_args()
 
