@@ -335,7 +335,13 @@ def update_ansible_collection_requirements(filename=''):
             )
             collection_tags = colection_repo.refs.as_dict(tag_refs)
             collection_tags_list = [key.decode() for key in collection_tags.keys()]
-            collection_versions = list(map(version.parse, collection_tags_list))
+            # collection_versions = list(map(version.parse, collection_tags_list))
+            collection_versions = list()
+            for tag in collection_tags_list:
+                try:
+                    collection_versions.append(version.parse(tag))
+                except version.InvalidVersion:
+                    continue
             collection['version'] = str(max(collection_versions))
 
     all_requirements['collections'] = all_collections
