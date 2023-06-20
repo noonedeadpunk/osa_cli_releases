@@ -331,7 +331,7 @@ def update_ansible_collection_requirements(filename=''):
         collection_type = collection.get('type')
         if collection_type == 'git' and collection["version"] != 'master':
             colection_repo = clone_role(
-                collection["name"], clone_root_path
+                collection["source"], clone_root_path
             )
             collection_tags = colection_repo.refs.as_dict(tag_refs)
             collection_tags_list = [key.decode() for key in collection_tags.keys()]
