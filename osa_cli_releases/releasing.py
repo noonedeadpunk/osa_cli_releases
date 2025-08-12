@@ -78,7 +78,7 @@ def parse_upper_constraints(sha):
 
 
 def discover_requirements_sha(
-    path="playbooks/defaults/repo_packages/openstack_services.yml"
+    path="inventory/group_vars/all/source_git.yml"
 ):
     """ Finds in openstack-ansible repos the current SHA for the requirements repo
     :param path: Location of the YAML file containing requirements_git_install_branch
