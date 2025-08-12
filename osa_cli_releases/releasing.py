@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import tempfile
 from packaging import version
-from dulwich.repo import Repo  # dulwich
+from git import Repo
 import requests  # requests
 import requirements as pyrequirements  # requirements-parser
 from prettytable import PrettyTable  # prettytable
@@ -292,22 +292,22 @@ def update_ansible_role_requirements_file(
                     pass
                 # Freeze or Bump
                 else:
-                    role_head = role_repo.head()
-                    role["version"] = role_head.decode()
-                    print("Bumped role %s to sha %s" % (role["name"], role["version"]))
+                    role_head = role_repo.head.object
+                    role["version"] = str(role_head)
+                    print(f"Bumped role {role['name']} to sha {role['version']}")
 
                     if shallow_since:
-                        head_timestamp = role_repo[role_head].commit_time
-                        head_datetime = datetime.fromtimestamp(head_timestamp) - timedelta(days=1)
+                        head_timestamp = role_head.committed_datetime
+                        head_datetime = head_timestamp - timedelta(days=1)
                         role["shallow_since"] = head_datetime.strftime('%Y-%m-%d')
 
                 # Copy the release notes `Also handle the release notes
                 # If frozen, no need to copy release notes.
                 if copyreleasenotes:
                     print("Copying %s's release notes" % role["name"])
-                    copy_role_releasenotes(role_repo.path, "./")
+                    copy_role_releasenotes(role_repo.working_dir, "./")
             finally:
-                shutil.rmtree(role_repo.path)
+                shutil.rmtree(role_repo.working_dir)
 
     shutil.rmtree(clone_root_path)
     print("Overwriting ansible-role-requirements")
@@ -323,23 +323,21 @@ def update_ansible_collection_requirements(filename=''):
     yaml = YAML()  # use ruamel.yaml to keep comments
     with open(filename, "r") as arryml:
         yaml_data = arryml.read()
-    tag_refs = 'refs/tags'.encode()
+
     all_requirements = yaml.load(_update_head_date(yaml_data))
     all_collections = all_requirements.get('collections')
 
     for collection in all_collections:
         collection_type = collection.get('type')
         if collection_type == 'git' and collection["version"] != 'master':
-            colection_repo = clone_role(
+            collection_repo = clone_role(
                 collection["source"], clone_root_path
             )
-            collection_tags = colection_repo.refs.as_dict(tag_refs)
-            collection_tags_list = [key.decode() for key in collection_tags.keys()]
-            # collection_versions = list(map(version.parse, collection_tags_list))
+            collection_tags = collection_repo.tags
             collection_versions = list()
-            for tag in collection_tags_list:
+            for tag in collection_tags:
                 try:
-                    collection_versions.append(version.parse(tag))
+                    collection_versions.append(version.parse(tag.name))
                 except version.InvalidVersion:
                     continue
             collection['version'] = str(max(collection_versions))
@@ -383,23 +381,20 @@ def clone_role(url, clone_root_path, branch=None, clone_folder=None, depth=None)
     :param depth(str): The git shallow clone depth
     :returns: dulwich repository object
     """
-    gitcall = ["git", "clone"]
+    gitargs = {}
 
     if depth and depth.isdigit():
-        gitcall.extend(["--depth", depth, "--no-single-branch"])
-
-    gitcall.append(url)
+        gitargs.update({"depth": depth, "no-single-branch": True})
 
     if branch:
-        gitcall.extend(["-b", branch])
+        gitargs.update({"branch": branch})
 
     if not clone_folder:
         clone_folder = url.split("/")[-1]
     dirpath = os.path.join(clone_root_path, clone_folder)
-    gitcall.append(dirpath)
 
-    subprocess.check_call(gitcall)
-    repo = Repo(dirpath)
+    print(f'Clonning {url} to {dirpath}')
+    repo = Repo.clone_from(url, dirpath, **gitargs)
     return repo
 
 
