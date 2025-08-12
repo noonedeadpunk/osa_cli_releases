@@ -7,7 +7,8 @@ import subprocess
 import tempfile
 from packaging import version
 from git import Repo
-import requests  # requests
+import urllib.request
+import json
 import requirements as pyrequirements  # requirements-parser
 from prettytable import PrettyTable  # prettytable
 from ruamel.yaml import YAML  # ruamel.yaml
@@ -57,8 +58,9 @@ def get_pypi_version(name):
     :param name: This is the project name on PyPI
     :returns: String containing latest version of package
     """
-    r = requests.get("https://pypi.org/pypi/{name}/json".format(name=name))
-    return r.json()["info"]["version"]
+    with urllib.request.urlopen(f"https://pypi.org/pypi/{name}/json") as url:
+        data = json.load(url)
+    return data["info"]["version"]
 
 
 def parse_upper_constraints(sha):
@@ -69,11 +71,10 @@ def parse_upper_constraints(sha):
                  - package 'specs' (list of tuples)
                  - package 'extras' (list)
     """
-    url = "https://raw.githubusercontent.com/openstack/requirements/{}/upper-constraints.txt".format(
-        sha
-    )
-    response = requests.get(url)
-    for req in pyrequirements.parse(response.text):
+    url = f"https://raw.githubusercontent.com/openstack/requirements/{sha}/upper-constraints.txt"
+    with urllib.request.urlopen(url) as response:
+        content = response.read().decode('utf-8')
+    for req in pyrequirements.parse(content):
         yield req
 
 
