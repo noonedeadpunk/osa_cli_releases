@@ -1,18 +1,19 @@
-from datetime import datetime, timedelta
 import glob
-from jinja2 import Template as j2_template
+import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
-from packaging import version
-from git import Repo
 import urllib.request
-import json
+from datetime import datetime, timedelta
+
 import requirements as pyrequirements  # requirements-parser
+from git import Repo
+from jinja2 import Template as j2_template
+from packaging import version
 from prettytable import PrettyTable  # prettytable
 from ruamel.yaml import YAML  # ruamel.yaml
-import re
 
 BASE_URI_MAPPING = {
         'openstack_opendev_base_url': 'https://opendev.org',
