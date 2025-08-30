@@ -75,11 +75,12 @@ def test_print_requirements_state_in_uc(capsys):
 
 
 def test_find_yaml_files():
-    assert len(releasing.find_yaml_files("tests/fixtures/repo_packages/*.yaml")) == 0
-    assert len(releasing.find_yaml_files("tests/fixtures/notexistingfolder/")) == 0
-    assert len(releasing.find_yaml_files("tests/fixtures/repo_packages/*")) == 0
-    assert len(releasing.find_yaml_files("tests/fixtures/repo_packages/")) == 2
-
+    assert len(releasing.find_yaml_files(["tests/fixtures/repo_packages/*.yaml"])) == 0
+    assert len(releasing.find_yaml_files(["tests/fixtures/notexistingfolder/"])) == 0
+    assert len(releasing.find_yaml_files([
+        "tests/fixtures/notexistingfolder/",
+        "tests/fixtures/repo_packages/*"])) == 2
+    assert len(releasing.find_yaml_files(["tests/fixtures/repo_packages/*"])) == 2
 
 # def test_bump_upstream_repo_sha_file():
 #    pass
